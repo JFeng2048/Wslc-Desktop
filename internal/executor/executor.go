@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"syscall"
 )
 
 // Result 保存一次命令执行的结果
@@ -38,6 +39,10 @@ func (e *Executor) Run(ctx context.Context, args ...string) (*Result, error) {
 // RunBinary 执行任意外部命令（如 wsl），用于系统能力探测等场景
 func (e *Executor) RunBinary(ctx context.Context, binary string, args ...string) (*Result, error) {
 	cmd := exec.CommandContext(ctx, binary, args...)
+
+	// 桌面程序没有控制台，若不隐藏窗口，每次执行命令都会闪出一个 cmd 窗口
+	hideCmdWindow(cmd)
+
 	var out, errOut bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &errOut
@@ -60,4 +65,21 @@ func (e *Executor) RunBinary(ctx context.Context, binary string, args ...string)
 	}
 	res.ExitCode = 0
 	return res, nil
+}
+
+// createNoWindow 为 Win32 CREATE_NO_WINDOW 标志值。
+// Go 的 syscall 包未导出该常量，这里按 Win32 定义直接声明，避免引入额外依赖。
+const createNoWindow = 0x08000000
+
+// hideCmdWindow 隐藏子进程的控制台窗口。
+//
+// 本项目以 windowsgui 子系统构建，主程序本身不附带控制台；若子进程沿用默认
+// 设置，每执行一条命令（例如 wslc list）屏幕上都会闪现一个 cmd 窗口。
+// CREATE_NO_WINDOW 让子进程在无控制台的情况下静默启动，HideWindow 兜底。
+func hideCmdWindow(cmd *exec.Cmd) {
+	if cmd.SysProcAttr == nil {
+		cmd.SysProcAttr = &syscall.SysProcAttr{}
+	}
+	cmd.SysProcAttr.HideWindow = true
+	cmd.SysProcAttr.CreationFlags |= createNoWindow
 }
