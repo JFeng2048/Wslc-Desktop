@@ -59,8 +59,12 @@ ManifestDPIAware true
 !define MUI_FINISHPAGE_NOAUTOCLOSE # Wait on the INSTFILES page so the user can take a look into the details of the installation steps
 !define MUI_ABORTWARNING # This will warn the user if they exit from the installer.
 
+## Components page: hosts the optional desktop shortcut checkbox.
+!define MUI_COMPONENTS_PAGE
+
 !insertmacro MUI_PAGE_WELCOME # Welcome to the installer page.
 # !insertmacro MUI_PAGE_LICENSE "resources\eula.txt" # Adds a EULA page to the installer
+!insertmacro MUI_PAGE_COMPONENTS # Optional features, e.g. the desktop shortcut.
 !insertmacro MUI_PAGE_DIRECTORY # In which folder install page.
 !insertmacro MUI_PAGE_INSTFILES # Installing page.
 !insertmacro MUI_PAGE_FINISH # Finished installation page.
@@ -83,40 +87,59 @@ OutFile "..\..\..\bin\${INFO_PROJECTNAME}-${ARCH}-installer.exe" # Name of the i
 !endif
 ShowInstDetails show # This will always show the installation details.
 
-Function .onInit
-   !insertmacro wails.checkArchitecture
-FunctionEnd
-
-Section
+## Main install section (required)
+Section "Wslc Desktop" SecMain
     !insertmacro wails.setShellContext
 
     !insertmacro wails.webview2runtime
 
     SetOutPath $INSTDIR
-    
-    !insertmacro wails.files
 
-    CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
-    CreateShortCut "$DESKTOP\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
+    !insertmacro wails.files
 
     !insertmacro wails.associateFiles
     !insertmacro wails.associateCustomProtocols
-    
+
     !insertmacro wails.writeUninstaller
+
+    ## Start menu entries live in a product-named subfolder, plus an uninstall shortcut
+    CreateDirectory "$SMPROGRAMS\${INFO_PRODUCTNAME}"
+    CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
+    CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}\Uninstall ${INFO_PRODUCTNAME}.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\${PRODUCT_EXECUTABLE}" 0
 SectionEnd
 
-Section "uninstall" 
+## Desktop shortcut: optional, selected by default via SectionSetFlags in .onInit
+Section /o "Desktop shortcut" SecDesktopShortcut
+    !insertmacro wails.setShellContext
+
+    CreateShortCut "$DESKTOP\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
+SectionEnd
+
+Section "uninstall"
     !insertmacro wails.setShellContext
 
     RMDir /r "$AppData\${PRODUCT_EXECUTABLE}" # Remove the WebView2 DataPath
 
-    RMDir /r $INSTDIR
-
-    Delete "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk"
+    Delete "$SMPROGRAMS\${INFO_PRODUCTNAME}\${INFO_PRODUCTNAME}.lnk"
+    Delete "$SMPROGRAMS\${INFO_PRODUCTNAME}\Uninstall ${INFO_PRODUCTNAME}.lnk"
+    RMDir "$SMPROGRAMS\${INFO_PRODUCTNAME}"
     Delete "$DESKTOP\${INFO_PRODUCTNAME}.lnk"
 
     !insertmacro wails.unassociateFiles
     !insertmacro wails.unassociateCustomProtocols
 
+    RMDir /r $INSTDIR
+
     !insertmacro wails.deleteUninstaller
 SectionEnd
+
+## Declared after the sections so that the section IDs above are already known.
+Function .onInit
+  !insertmacro wails.checkArchitecture
+
+  ## /o marks the section as optional and unchecked by default; selecting it
+  ## here makes it optional but checked by default.
+  ## SectionSetFlags takes a section index (0 = Wslc Desktop, 1 = Desktop
+  ## shortcut, 2 = uninstall) and a flag value where 1 = SF_SELECTED.
+  SectionSetFlags 1 1
+FunctionEnd
