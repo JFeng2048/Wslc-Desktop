@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish, e.g. v0.1.0 (defaults to the current ref)'
+        required: false
+        default: ''
+      draft:
+        description: 'Create the release as a draft'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build, package and publish
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install Wails3 CLI
+        run: |
+          go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.27
+          echo "$(go env GOPATH)\bin" >> $env:GITHUB_PATH
+
+      - name: Install NSIS
+        run: choco install nsis --no-progress -y
+
+      - name: Build application
+        run: wails3 build
+
+      - name: Build NSIS installer
+        run: wails3 task package
+
+      - name: Collect artifacts
+        run: |
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Copy-Item bin\*.exe release\ -Force
+          Get-ChildItem release | Select-Object Name, Length
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wslc-desktop-windows
+          path: release/*.exe
+          if-no-files-found: error
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag != '' && inputs.tag || github.ref_name }}
+          name: ${{ inputs.tag != '' && inputs.tag || github.ref_name }}
+          generate_release_notes: true
+          draft: ${{ inputs.draft || false }}
+          files: release/*.exe

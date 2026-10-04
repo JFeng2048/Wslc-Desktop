@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build check
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install Wails3 CLI
+        run: |
+          go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-beta.27
+          echo "$(go env GOPATH)\bin" >> $env:GITHUB_PATH
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix ui
+
+      - name: Type-check frontend
+        working-directory: ui
+        run: npx vue-tsc --noEmit
+
+      - name: Vet backend
+        run: go vet ./...
+
+      - name: Build
+        run: wails3 build
