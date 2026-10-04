@@ -26,6 +26,28 @@ tasks:
       # Default to CGO_ENABLED=0 if not explicitly set
       CGO_ENABLED: '{{.CGO_ENABLED | default "0"}}'
 
+  build:all:
+    summary: Builds the application for both amd64 and arm64
+    cmds:
+      - task: build
+        vars:
+          ARCH: amd64
+      - task: build
+        vars:
+          ARCH: arm64
+
+  package:all:
+    summary: Creates NSIS installers for both amd64 and arm64
+    cmds:
+      - task: create:nsis:installer
+        vars:
+          ARCH: amd64
+          INSTALL_SCOPE: '{{.INSTALL_SCOPE | default "machine"}}'
+      - task: create:nsis:installer
+        vars:
+          ARCH: arm64
+          INSTALL_SCOPE: '{{.INSTALL_SCOPE | default "machine"}}'
+
   build:native:
     summary: Builds the application using native Go compilation (Windows only)
     internal: true
@@ -47,10 +69,13 @@ tasks:
       - task: generate:syso
         vars:
           ARCH: '{{.ARCH}}'
-      - '{{if eq .OBFUSCATED "true"}}garble {{.GARBLE_ARGS}} build{{else}}go build{{end}} {{.BUILD_FLAGS}} -o "{{.BIN_DIR}}/{{.APP_NAME}}.exe"'
+      - '{{if eq .OBFUSCATED "true"}}garble {{.GARBLE_ARGS}} build{{else}}go build{{end}} {{.BUILD_FLAGS}} -o "{{.BIN_DIR}}/{{.OUTPUT_NAME}}.exe"'
       - cmd: powershell Remove-item *.syso
         platforms: [windows]
     vars:
+      ARCH: '{{.ARCH | default ARCH}}'
+      # 仅在非 amd64 时附加架构后缀，避免多架构产物互相覆盖
+      OUTPUT_NAME: '{{.APP_NAME}}{{if ne .ARCH "amd64"}}-{{.ARCH}}{{end}}'
       BUILD_FLAGS: '{{if eq .DEV "true"}}{{if or .EXTRA_TAGS (eq .OBFUSCATED "true")}}-tags {{if eq .OBFUSCATED "true"}}wails_obfuscated{{if .EXTRA_TAGS}},{{end}}{{end}}{{.EXTRA_TAGS}} {{end}}-buildvcs=false -gcflags=all="-l"{{else}}-tags production{{if eq .OBFUSCATED "true"}},wails_obfuscated{{end}}{{if .EXTRA_TAGS}},{{.EXTRA_TAGS}}{{end}} -trimpath -buildvcs=false -ldflags="-w -s -H windowsgui"{{end}}'
     env:
       GOOS: windows
@@ -88,13 +113,14 @@ tasks:
       - wails3 generate webview2bootstrapper -dir "{{.ROOT_DIR}}/build/windows/nsis"
       - |
         {{if eq OS "windows"}}
-        makensis {{if eq .INSTALL_SCOPE "user"}}-DWAILS_INSTALL_SCOPE=user -DREQUEST_EXECUTION_LEVEL=user {{end}}-DARG_WAILS_{{.ARG_FLAG}}_BINARY="{{.ROOT_DIR}}\{{.BIN_DIR}}\{{.APP_NAME}}.exe" project.nsi
+        makensis {{if eq .INSTALL_SCOPE "user"}}-DWAILS_INSTALL_SCOPE=user -DREQUEST_EXECUTION_LEVEL=user {{end}}-DARG_WAILS_{{.ARG_FLAG}}_BINARY="{{.ROOT_DIR}}\{{.BIN_DIR}}\{{.OUTPUT_NAME}}.exe" project.nsi
         {{else}}
-        makensis {{if eq .INSTALL_SCOPE "user"}}-DWAILS_INSTALL_SCOPE=user -DREQUEST_EXECUTION_LEVEL=user {{end}}-DARG_WAILS_{{.ARG_FLAG}}_BINARY="{{.ROOT_DIR}}/{{.BIN_DIR}}/{{.APP_NAME}}.exe" project.nsi
+        makensis {{if eq .INSTALL_SCOPE "user"}}-DWAILS_INSTALL_SCOPE=user -DREQUEST_EXECUTION_LEVEL=user {{end}}-DARG_WAILS_{{.ARG_FLAG}}_BINARY="{{.ROOT_DIR}}/{{.BIN_DIR}}/{{.OUTPUT_NAME}}.exe" project.nsi
         {{end}}
     vars:
       ARCH: '{{.ARCH | default ARCH}}'
       ARG_FLAG: '{{if eq .ARCH "amd64"}}AMD64{{else}}ARM64{{end}}'
+      OUTPUT_NAME: '{{.APP_NAME}}{{if ne .ARCH "amd64"}}-{{.ARCH}}{{end}}'
       INSTALL_SCOPE: '{{.INSTALL_SCOPE | default "machine"}}'
 
   create:msix:package:
@@ -105,8 +131,8 @@ tasks:
       - |-
         wails3 tool msix \
           --config "{{.ROOT_DIR}}/build/config.yml" \
-          --name "{{.APP_NAME}}.exe" \
-          --executable "{{.ROOT_DIR}}/{{.BIN_DIR}}/{{.APP_NAME}}.exe" \
+          --name "{{.OUTPUT_NAME}}.exe" \
+          --executable "{{.ROOT_DIR}}/{{.BIN_DIR}}/{{.OUTPUT_NAME}}.exe" \
           --arch "{{.ARCH}}" \
           --out "{{.ROOT_DIR}}/{{.BIN_DIR}}/{{.APP_NAME}}-{{.ARCH}}.msix" \
           {{if .CERT_PATH}}--cert "{{.CERT_PATH}}"{{end}} \
@@ -114,6 +140,7 @@ tasks:
           {{if eq .USE_MSIX_TOOL "true"}}--use-msix-tool{{else}}--use-makeappx{{end}}
     vars:
       ARCH: '{{.ARCH | default ARCH}}'
+      OUTPUT_NAME: '{{.APP_NAME}}{{if ne .ARCH "amd64"}}-{{.ARCH}}{{end}}'
       CERT_PATH: '{{.CERT_PATH | default ""}}'
       # Publisher must match the subject of your signing certificate, e.g. "CN=JFeng2048"
       # (author: JFeng2048, email: JFeng2048@outlook.com)
@@ -126,8 +153,12 @@ tasks:
       - wails3 tool msix-install-tools
 
   run:
+    summary: Runs the built executable
     cmds:
-      - '{{.BIN_DIR}}/{{.APP_NAME}}.exe'
+      - '{{.BIN_DIR}}/{{.OUTPUT_NAME}}.exe'
+    vars:
+      ARCH: '{{.ARCH | default ARCH}}'
+      OUTPUT_NAME: '{{.APP_NAME}}{{if ne .ARCH "amd64"}}-{{.ARCH}}{{end}}'
 
   sign:
     summary: Signs the Windows executable
@@ -141,7 +172,10 @@ tasks:
     cmds:
       # Certificate vars are optional: if unset, `wails3 tool sign` falls back to
       # the certificate configured globally via `wails3 setup`.
-      - wails3 tool sign --input "{{.BIN_DIR}}/{{.APP_NAME}}.exe" {{if .SIGN_CERTIFICATE}}--certificate "{{.SIGN_CERTIFICATE}}"{{end}} {{if .SIGN_THUMBPRINT}}--thumbprint "{{.SIGN_THUMBPRINT}}"{{end}} {{if .TIMESTAMP_SERVER}}--timestamp "{{.TIMESTAMP_SERVER}}"{{end}}
+      - wails3 tool sign --input "{{.BIN_DIR}}/{{.OUTPUT_NAME}}.exe" {{if .SIGN_CERTIFICATE}}--certificate "{{.SIGN_CERTIFICATE}}"{{end}} {{if .SIGN_THUMBPRINT}}--thumbprint "{{.SIGN_THUMBPRINT}}"{{end}} {{if .TIMESTAMP_SERVER}}--timestamp "{{.TIMESTAMP_SERVER}}"{{end}}
+    vars:
+      ARCH: '{{.ARCH | default ARCH}}'
+      OUTPUT_NAME: '{{.APP_NAME}}{{if ne .ARCH "amd64"}}-{{.ARCH}}{{end}}'
 
   sign:installer:
     summary: Signs the NSIS installer

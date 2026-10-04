@@ -16,10 +16,20 @@ tasks:
     cmds:
       - task: windows:build
 
+  build:all:
+    summary: Builds the application for both amd64 and arm64
+    cmds:
+      - task: windows:build:all
+
   package:
     summary: Packages a production Windows build (NSIS installer or MSIX)
     cmds:
       - task: windows:package
+
+  package:all:
+    summary: Packages NSIS installers for both amd64 and arm64
+    cmds:
+      - task: windows:package:all
 
   run:
     summary: Runs the application

@@ -59,6 +59,27 @@ wails3 dev
 wails3 build
 ```
 
+### Build for a specific architecture
+
+The default target is `amd64`. Pass `ARCH` to cross-compile; a suffix is added to the binary name for
+anything other than `amd64`, so multiple architectures can coexist in `bin/`.
+
+```bash
+wails3 task build ARCH=arm64              # -> bin/wslc-desktop-arm64.exe
+wails3 task package ARCH=arm64            # NSIS installer for arm64
+wails3 task build:all                     # both amd64 and arm64
+wails3 task package:all                   # NSIS installers for both
+```
+
+Output in `bin/`:
+
+| File | Description |
+| --- | --- |
+| `wslc-desktop.exe` | amd64 executable |
+| `wslc-desktop-arm64.exe` | arm64 executable |
+| `wslc-desktop-AMD64-installer.exe` | NSIS installer, amd64 |
+| `wslc-desktop-ARM64-installer.exe` | NSIS installer, arm64 |
+
 ## Contributing
 
 - Found a bug? [Open an issue](https://github.com/JFeng2048/Wslc-Desktop/issues/new?labels=bug)

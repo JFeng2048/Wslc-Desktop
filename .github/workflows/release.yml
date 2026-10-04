@@ -48,11 +48,11 @@ jobs:
       - name: Install NSIS
         run: choco install nsis --no-progress -y
 
-      - name: Build application
-        run: wails3 build
+      - name: Build application (amd64 + arm64)
+        run: wails3 task build:all
 
-      - name: Build NSIS installer
-        run: wails3 task package
+      - name: Build NSIS installers (amd64 + arm64)
+        run: wails3 task package:all
 
       - name: Collect artifacts
         run: |

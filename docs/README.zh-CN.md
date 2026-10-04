@@ -59,6 +59,27 @@ wails3 dev
 wails3 build
 ```
 
+### 指定 CPU 架构打包
+
+默认目标架构为 `amd64`。传入 `ARCH` 即可交叉编译；非 `amd64` 会自动在文件名后附加架构后缀，
+因此多种架构的产物可以共存于 `bin/`。
+
+```bash
+wails3 task build ARCH=arm64              # -> bin/wslc-desktop-arm64.exe
+wails3 task package ARCH=arm64            # 生成 arm64 的 NSIS 安装包
+wails3 task build:all                     # 同时构建 amd64 与 arm64
+wails3 task package:all                   # 同时生成两种架构的 NSIS 安装包
+```
+
+`bin/` 产物说明：
+
+| 文件 | 说明 |
+| --- | --- |
+| `wslc-desktop.exe` | amd64 可执行文件 |
+| `wslc-desktop-arm64.exe` | arm64 可执行文件 |
+| `wslc-desktop-AMD64-installer.exe` | amd64 NSIS 安装包 |
+| `wslc-desktop-ARM64-installer.exe` | arm64 NSIS 安装包 |
+
 ## 参与贡献
 
 - 发现 Bug？[提交 Issue](https://github.com/JFeng2048/Wslc-Desktop/issues/new?labels=bug)
