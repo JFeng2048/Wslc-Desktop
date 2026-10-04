@@ -36,6 +36,28 @@ tasks:
         vars:
           ARCH: arm64
 
+  package:zip:
+    summary: Creates a portable ZIP archive (inner exe is always wslc-desktop.exe)
+    deps:
+      - task: build
+        vars:
+          ARCH: '{{.ARCH}}'
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -File "{{.ROOT_DIR}}/build/windows/make-zip.ps1" -ExePath "{{.ROOT_DIR}}/{{.BIN_DIR}}/{{.OUTPUT_NAME}}.exe" -ZipPath "{{.ROOT_DIR}}/{{.BIN_DIR}}/{{.APP_NAME}}-{{.APP_VERSION}}-{{.ARCH}}.zip" -ExeName "{{.APP_NAME}}.exe"
+    vars:
+      ARCH: '{{.ARCH | default ARCH}}'
+      OUTPUT_NAME: '{{.APP_NAME}}-{{.ARCH}}'
+
+  package:zip:all:
+    summary: Creates portable ZIP archives for both amd64 and arm64
+    cmds:
+      - task: package:zip
+        vars:
+          ARCH: amd64
+      - task: package:zip
+        vars:
+          ARCH: arm64
+
   package:all:
     summary: Creates NSIS installers for both amd64 and arm64
     cmds:
@@ -75,7 +97,7 @@ tasks:
     vars:
       ARCH: '{{.ARCH | default ARCH}}'
       # 仅在非 amd64 时附加架构后缀，避免多架构产物互相覆盖
-      OUTPUT_NAME: '{{.APP_NAME}}{{if ne .ARCH "amd64"}}-{{.ARCH}}{{end}}'
+      OUTPUT_NAME: '{{.APP_NAME}}-{{.ARCH}}'
       BUILD_FLAGS: '{{if eq .DEV "true"}}{{if or .EXTRA_TAGS (eq .OBFUSCATED "true")}}-tags {{if eq .OBFUSCATED "true"}}wails_obfuscated{{if .EXTRA_TAGS}},{{end}}{{end}}{{.EXTRA_TAGS}} {{end}}-buildvcs=false -gcflags=all="-l"{{else}}-tags production{{if eq .OBFUSCATED "true"}},wails_obfuscated{{end}}{{if .EXTRA_TAGS}},{{.EXTRA_TAGS}}{{end}} -trimpath -buildvcs=false -ldflags="-w -s -H windowsgui"{{end}}'
     env:
       GOOS: windows
@@ -105,6 +127,8 @@ tasks:
     dir: build/windows/nsis
     deps:
       - task: build
+        vars:
+          ARCH: '{{.ARCH}}'
     preconditions:
       - sh: '[ "{{.INSTALL_SCOPE}}" = "user" ] || [ "{{.INSTALL_SCOPE}}" = "machine" ]'
         msg: "INSTALL_SCOPE must be 'user' or 'machine', got '{{.INSTALL_SCOPE}}'"
@@ -120,13 +144,15 @@ tasks:
     vars:
       ARCH: '{{.ARCH | default ARCH}}'
       ARG_FLAG: '{{if eq .ARCH "amd64"}}AMD64{{else}}ARM64{{end}}'
-      OUTPUT_NAME: '{{.APP_NAME}}{{if ne .ARCH "amd64"}}-{{.ARCH}}{{end}}'
+      OUTPUT_NAME: '{{.APP_NAME}}-{{.ARCH}}'
       INSTALL_SCOPE: '{{.INSTALL_SCOPE | default "machine"}}'
 
   create:msix:package:
     summary: Creates an MSIX package
     deps:
       - task: build
+        vars:
+          ARCH: '{{.ARCH}}'
     cmds:
       - |-
         wails3 tool msix \
@@ -140,7 +166,7 @@ tasks:
           {{if eq .USE_MSIX_TOOL "true"}}--use-msix-tool{{else}}--use-makeappx{{end}}
     vars:
       ARCH: '{{.ARCH | default ARCH}}'
-      OUTPUT_NAME: '{{.APP_NAME}}{{if ne .ARCH "amd64"}}-{{.ARCH}}{{end}}'
+      OUTPUT_NAME: '{{.APP_NAME}}-{{.ARCH}}'
       CERT_PATH: '{{.CERT_PATH | default ""}}'
       # Publisher must match the subject of your signing certificate, e.g. "CN=JFeng2048"
       # (author: JFeng2048, email: JFeng2048@outlook.com)
@@ -158,7 +184,7 @@ tasks:
       - '{{.BIN_DIR}}/{{.OUTPUT_NAME}}.exe'
     vars:
       ARCH: '{{.ARCH | default ARCH}}'
-      OUTPUT_NAME: '{{.APP_NAME}}{{if ne .ARCH "amd64"}}-{{.ARCH}}{{end}}'
+      OUTPUT_NAME: '{{.APP_NAME}}-{{.ARCH}}'
 
   sign:
     summary: Signs the Windows executable
@@ -175,7 +201,7 @@ tasks:
       - wails3 tool sign --input "{{.BIN_DIR}}/{{.OUTPUT_NAME}}.exe" {{if .SIGN_CERTIFICATE}}--certificate "{{.SIGN_CERTIFICATE}}"{{end}} {{if .SIGN_THUMBPRINT}}--thumbprint "{{.SIGN_THUMBPRINT}}"{{end}} {{if .TIMESTAMP_SERVER}}--timestamp "{{.TIMESTAMP_SERVER}}"{{end}}
     vars:
       ARCH: '{{.ARCH | default ARCH}}'
-      OUTPUT_NAME: '{{.APP_NAME}}{{if ne .ARCH "amd64"}}-{{.ARCH}}{{end}}'
+      OUTPUT_NAME: '{{.APP_NAME}}-{{.ARCH}}'
 
   sign:installer:
     summary: Signs the NSIS installer

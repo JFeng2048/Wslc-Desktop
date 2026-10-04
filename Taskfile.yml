@@ -3,6 +3,8 @@ version: '3'
 vars:
   APP_NAME: "wslc-desktop"
   BIN_DIR: "bin"
+  # 发布版本号，用于 zip 包命名；需与 build/config.yml 的 info.version 保持一致
+  APP_VERSION: '{{.APP_VERSION | default "0.1.0"}}'
   PACKAGE_MANAGER: '{{.PACKAGE_MANAGER | default "npm"}}'
   VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'
 
@@ -30,6 +32,16 @@ tasks:
     summary: Packages NSIS installers for both amd64 and arm64
     cmds:
       - task: windows:package:all
+
+  package:zip:
+    summary: Packages a portable ZIP (inner exe is always wslc-desktop.exe)
+    cmds:
+      - task: windows:package:zip
+
+  package:zip:all:
+    summary: Packages portable ZIPs for both amd64 and arm64
+    cmds:
+      - task: windows:package:zip:all
 
   run:
     summary: Runs the application

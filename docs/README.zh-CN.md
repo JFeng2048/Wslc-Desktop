@@ -55,30 +55,41 @@ Windows 桌面应用，日常容器运维不再需要背命令。
 # 开发模式，前后端均支持热更新
 wails3 dev
 
-# 生产构建 -> bin/wslc-desktop.exe
+# 生产构建 -> bin/wslc-desktop-amd64.exe
 wails3 build
 ```
 
 ### 指定 CPU 架构打包
 
-默认目标架构为 `amd64`。传入 `ARCH` 即可交叉编译；非 `amd64` 会自动在文件名后附加架构后缀，
+默认目标架构为 `amd64`。传入 `ARCH` 即可交叉编译，架构始终体现在可执行文件名中，
 因此多种架构的产物可以共存于 `bin/`。
 
 ```bash
 wails3 task build ARCH=arm64              # -> bin/wslc-desktop-arm64.exe
-wails3 task package ARCH=arm64            # 生成 arm64 的 NSIS 安装包
 wails3 task build:all                     # 同时构建 amd64 与 arm64
-wails3 task package:all                   # 同时生成两种架构的 NSIS 安装包
+```
+
+### 打包为 ZIP
+
+每个 ZIP 内部的可执行文件统一命名为 `wslc-desktop.exe`，版本与架构信息体现在压缩包文件名上。
+
+```bash
+wails3 task package:zip                   # -> bin/wslc-desktop-0.1.0-amd64.zip
+wails3 task package:zip:all               # 同时生成两种架构的 ZIP
+wails3 task package:zip APP_VERSION=0.2.0 # 覆盖文件名中的版本号
 ```
 
 `bin/` 产物说明：
 
 | 文件 | 说明 |
 | --- | --- |
-| `wslc-desktop.exe` | amd64 可执行文件 |
+| `wslc-desktop-amd64.exe` | amd64 可执行文件 |
 | `wslc-desktop-arm64.exe` | arm64 可执行文件 |
-| `wslc-desktop-AMD64-installer.exe` | amd64 NSIS 安装包 |
-| `wslc-desktop-ARM64-installer.exe` | arm64 NSIS 安装包 |
+| `wslc-desktop-0.1.0-amd64.zip` | 便携版 ZIP，内部为 `wslc-desktop.exe`（amd64） |
+| `wslc-desktop-0.1.0-arm64.zip` | 便携版 ZIP，内部为 `wslc-desktop.exe`（arm64） |
+
+> ZIP 文件名中的版本号取自 `Taskfile.yml` 的 `APP_VERSION`，请与 `build/config.yml` 中的
+> `info.version` 保持一致。
 
 ## 参与贡献
 

@@ -51,12 +51,17 @@ jobs:
       - name: Build application (amd64 + arm64)
         run: wails3 task build:all
 
-      - name: Build NSIS installers (amd64 + arm64)
+      - name: Create portable ZIPs (amd64 + arm64)
+        run: wails3 task package:zip:all
+
+      - name: Build NSIS installers (best effort)
         run: wails3 task package:all
+        continue-on-error: true
 
       - name: Collect artifacts
         run: |
           New-Item -ItemType Directory -Force -Path release | Out-Null
+          Copy-Item bin\*.zip release\ -Force
           Copy-Item bin\*.exe release\ -Force
           Get-ChildItem release | Select-Object Name, Length
 
@@ -64,7 +69,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wslc-desktop-windows
-          path: release/*.exe
+          path: release/*
           if-no-files-found: error
 
       - name: Publish GitHub release
@@ -74,4 +79,4 @@ jobs:
           name: ${{ inputs.tag != '' && inputs.tag || github.ref_name }}
           generate_release_notes: true
           draft: ${{ inputs.draft || false }}
-          files: release/*.exe
+          files: release/*

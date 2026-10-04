@@ -55,30 +55,42 @@ Two commands are all you need:
 # Development mode, with hot reload for the frontend and backend
 wails3 dev
 
-# Production build -> bin/wslc-desktop.exe
+# Production build -> bin/wslc-desktop-amd64.exe
 wails3 build
 ```
 
 ### Build for a specific architecture
 
-The default target is `amd64`. Pass `ARCH` to cross-compile; a suffix is added to the binary name for
-anything other than `amd64`, so multiple architectures can coexist in `bin/`.
+The default target is `amd64`. Pass `ARCH` to cross-compile — the architecture is always part of the
+binary name, so multiple builds can coexist in `bin/`.
 
 ```bash
 wails3 task build ARCH=arm64              # -> bin/wslc-desktop-arm64.exe
-wails3 task package ARCH=arm64            # NSIS installer for arm64
 wails3 task build:all                     # both amd64 and arm64
-wails3 task package:all                   # NSIS installers for both
+```
+
+### Package as ZIP
+
+Each ZIP contains the executable named `wslc-desktop.exe`, while the archive name carries the
+version and architecture.
+
+```bash
+wails3 task package:zip                   # -> bin/wslc-desktop-0.1.0-amd64.zip
+wails3 task package:zip:all               # ZIPs for both architectures
+wails3 task package:zip APP_VERSION=0.2.0 # override the version in the file name
 ```
 
 Output in `bin/`:
 
 | File | Description |
 | --- | --- |
-| `wslc-desktop.exe` | amd64 executable |
+| `wslc-desktop-amd64.exe` | amd64 executable |
 | `wslc-desktop-arm64.exe` | arm64 executable |
-| `wslc-desktop-AMD64-installer.exe` | NSIS installer, amd64 |
-| `wslc-desktop-ARM64-installer.exe` | NSIS installer, arm64 |
+| `wslc-desktop-0.1.0-amd64.zip` | portable ZIP, contains `wslc-desktop.exe` (amd64) |
+| `wslc-desktop-0.1.0-arm64.zip` | portable ZIP, contains `wslc-desktop.exe` (arm64) |
+
+> The version in the ZIP name comes from `APP_VERSION` in `Taskfile.yml`; keep it in sync with
+> `info.version` in `build/config.yml`.
 
 ## Contributing
 
