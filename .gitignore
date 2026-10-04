@@ -1,0 +1,18 @@
+.task
+bin
+frontend/dist
+frontend/node_modules
+build/linux/appimage/build
+build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
+# Mobile generated (per-machine; overlays hold absolute paths)
+build/ios/xcode/overlay.json
+build/ios/xcode/gen/
+build/android/overlay.json
+build/android/gen/
+ui/node_modules
+ui/dist
+# Wails 自动生成的 TS 绑定（wails3 generate bindings）
+ui/src/bindings
+# wails3 generate icons 在 Windows 上仍会产出的 macOS 占位图标（本项目不用）
+build/icon.icns
+build/Assets.car

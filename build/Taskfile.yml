@@ -1,0 +1,132 @@
+version: '3'
+
+# 公共任务（被各平台 Taskfile 通过 includes 引入）。
+# Wails v3 的 dev/build 流程依赖内置的 common:build:frontend 与
+# common:dev:frontend，它们在本项目分别落地为 build:ui 与 dev:ui。
+# wslc 仅面向 Windows，这里只保留 npm 前端链路，移除 yarn/pnpm/bun、
+# Docker 与 iOS/Server 等无关任务。
+
+tasks:
+  go:mod:tidy:
+    summary: Runs `go mod tidy`
+    internal: true
+    # Universal/multi-arch builds invoke this concurrently from parallel deps;
+    # two `go mod tidy` processes racing on go.mod can corrupt it (#4637).
+    run: once
+    cmds:
+      - go mod tidy
+
+  install:ui:deps:
+    summary: Install ui dependencies (npm)
+    run: once
+    cmds:
+      - task: install:ui:deps:npm
+
+  install:ui:deps:npm:
+    dir: ui
+    sources:
+      - package.json
+      - package-lock.json
+    generates:
+      - node_modules
+    preconditions:
+      - sh: npm version
+        msg: "Looks like npm isn't installed. Npm is part of the Node installer: https://nodejs.org/en/download/"
+    cmds:
+      - npm install
+
+  build:ui:
+    label: build:ui (DEV={{.DEV}})
+    summary: Build the ui project
+    run: once
+    dir: ui
+    sources:
+      - "**/*"
+      - exclude: node_modules/**/*
+    generates:
+      - dist/**/*
+    deps:
+      - task: install:ui:deps
+      - task: generate:bindings
+    cmds:
+      - task: ui:run
+        vars:
+          SCRIPT: '{{if eq .DEV "true"}}build:dev{{else}}build{{end}}'
+    env:
+      PRODUCTION: '{{if eq .DEV "true"}}false{{else}}true{{end}}'
+
+  ui:run:
+    summary: Run a ui script with npm
+    cmds:
+      - task: ui:run:npm
+        vars:
+          SCRIPT: "{{.SCRIPT}}"
+    vars:
+      SCRIPT: "{{.SCRIPT}}"
+
+  ui:run:npm:
+    dir: ui
+    cmds:
+      - npm run {{.SCRIPT}} -q
+    vars:
+      SCRIPT: "{{.SCRIPT}}"
+
+  generate:bindings:
+    summary: Generates TypeScript bindings for the ui
+    run: once
+    deps:
+      - task: go:mod:tidy
+    sources:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+      - exclude: ui/**/*
+      - ui/src/bindings/**/*  # Rerun when switching between dev/production mode causes changes in output
+    generates:
+      - ui/src/bindings/**/*
+    cmds:
+      - wails3 generate bindings -f '{{.BUILD_FLAGS}}' -clean=true{{if eq .OBFUSCATED "true"}} -obfuscated{{end}} -ts -i -names -d ui/src/bindings
+
+  generate:icons:
+    summary: Generates the Windows application icon
+    run: once
+    # wails3 generate icons 始终会生成 macOS 图标；本项目仅面向 Windows，
+    # 故把 mac 输出指向始终存在的 build/，避免因缺少 darwin 目录而失败。
+    # 所有路径使用 ROOT_DIR 绝对路径，不受任务工作目录影响。
+    dir: '{{.ROOT_DIR}}'
+    sources:
+      - "build/logo.png"
+    generates:
+      - "build/windows/icon.ico"
+    cmds:
+      - wails3 generate icons -input "{{.ROOT_DIR}}/build/logo.png" -windowsfilename "{{.ROOT_DIR}}/build/windows/icon.ico" -macfilename "{{.ROOT_DIR}}/build/icon.icns" -macassetdir "{{.ROOT_DIR}}/build"
+
+  # wails3 的 dev/build 流程通过 common:build:frontend / common:dev:frontend
+  # 驱动前端构建，这里显式提供别名，避免依赖工具内置任务缺失导致失败。
+  build:frontend:
+    summary: Builds the frontend (alias consumed by `wails3 build`)
+    deps:
+      - task: build:ui
+
+  dev:frontend:
+    summary: Runs the frontend in development mode (alias consumed by `wails3 dev`)
+    deps:
+      - task: dev:ui
+
+  dev:ui:
+    summary: Runs the ui in development mode
+    deps:
+      - task: install:ui:deps
+    cmds:
+      - task: ui:dev:npm
+
+  ui:dev:npm:
+    dir: ui
+    cmds:
+      - npm run dev -- --port {{.VITE_PORT}} --strictPort
+
+  update:build-assets:
+    summary: Updates the build assets
+    dir: build
+    cmds:
+      - wails3 update build-assets -name "{{.APP_NAME}}" -binaryname "{{.APP_NAME}}" -config config.yml -dir .
