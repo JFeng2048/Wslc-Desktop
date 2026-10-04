@@ -6,8 +6,8 @@
 
 [![Platform](https://img.shields.io/badge/platform-Windows-0078D4?logo=windows&logoColor=white)](https://learn.microsoft.com/windows/wsl/)
 [![Wails](https://img.shields.io/badge/Wails-v3-06B6D4?logo=go&logoColor=white)](https://v3.wails.io/)
-[![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go&logoColor=white)](https://go.dev/)
-![License](https://img.shields.io/badge/license-unlicensed-lightgrey)
+[![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go&logoColor=white)](https://go.dev/)
+[![License](https://img.shields.io/badge/license-MIT-06b6d4?logo=opensourceinitiative&logoColor=white)](LICENSE)
 
 [English](../README.md) | **简体中文**
 
@@ -20,12 +20,12 @@ Wslc Desktop 是一个通过图形界面管理 WSL 容器的 Windows 桌面应�
 使用的同一套工具处理，只是把命令换成了表格、按钮与表单。对于 WSL 场景，它可作为 Docker Desktop
 的轻量替代方案，支持 Windows 10 与 Windows 11（需启用 WSL 2）。
 
-基于 Wails v3、Go 1.25、Vue 3 与 TypeScript 构建。
+基于 Wails v3、Go 1.26、Vue 3 与 TypeScript 构建。
 
 ## 快速开始
 
 只需两个命令。先准备环境：Windows 10/11 并启用 WSL 2、`wslc` CLI 已在 `PATH` 中、
-[Go](https://go.dev/dl/) 1.25+、[Node.js](https://nodejs.org/) 20+，以及
+[Go](https://go.dev/dl/) 1.26+、[Node.js](https://nodejs.org/) 20+，以及
 [Wails v3 CLI](https://v3.wails.io/getting-started/installation/)。
 
 ```bash
@@ -107,7 +107,7 @@ docs/                  补充文档
 
 **最低环境要求是什么？**
 Windows 10 build 1809 及以上（推荐 Windows 11）、WSL 2、`wslc` CLI 位于 `PATH`、
-Go 1.25+、Node.js 20+，开发还需 Wails v3 CLI。
+Go 1.26+、Node.js 20+，开发还需 Wails v3 CLI。
 
 **支持 Windows on ARM 吗？**
 支持。使用 `wails3 task build ARCH=arm64` 构建，或用 `build:all` / `package:zip:all`
@@ -139,8 +139,7 @@ Go 1.25+、Node.js 20+，开发还需 Wails v3 CLI。
 
 ## 许可协议
 
-本项目尚未声明开源许可证。在许可证确定之前，著作权归作者所有。若你计划再分发本项目代码或基于其
-二次开发，请先[提交 Issue](https://github.com/JFeng2048/Wslc-Desktop/issues/new)沟通。
+本项目基于 [MIT 许可证](LICENSE) 开源。欢迎贡献代码，贡献流程见上方[参与贡献](#参与贡献)。
 
 ## 作者
 

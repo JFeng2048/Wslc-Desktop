@@ -1,10 +1,13 @@
 name: CI
 
+# 当前仅保留手动触发；如需恢复自动校验，取消下面两行注释即可。
+# Currently manual-trigger only. Uncomment the two lines below to restore
+# automatic validation on push and pull requests.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  # push:
+  #   branches: [main]
+  # pull_request:
+  #   branches: [main]
   workflow_dispatch:
 
 permissions:

@@ -4,7 +4,7 @@ Wslc Desktop —— 基于 Wails v3 的 WSL 容器图形化管理工具（Window
 
 ## 技术栈
 
-- **后端**：Go 1.21+，Wails v3（`github.com/wailsapp/wails/v3`）。
+- **后端**：Go 1.26+，Wails v3（`github.com/wailsapp/wails/v3`）。
 - **前端**：Vue 3 + TypeScript + Vite + Pinia + vue-i18n + Naive UI + lucide-vue-next。
 - **命令层**：所有 WSL 容器操作统一通过调用外部 CLI `wslc` 完成（不直连 Docker/WSL API）。
   `wslc` 是微软的 WSL 容器 CLI，支持 34 个子命令。

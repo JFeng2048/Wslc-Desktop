@@ -6,8 +6,8 @@
 
 [![Platform](https://img.shields.io/badge/platform-Windows-0078D4?logo=windows&logoColor=white)](https://learn.microsoft.com/windows/wsl/)
 [![Wails](https://img.shields.io/badge/Wails-v3-06B6D4?logo=go&logoColor=white)](https://v3.wails.io/)
-[![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go&logoColor=white)](https://go.dev/)
-![License](https://img.shields.io/badge/license-unlicensed-lightgrey)
+[![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go&logoColor=white)](https://go.dev/)
+[![License](https://img.shields.io/badge/license-MIT-06b6d4?logo=opensourceinitiative&logoColor=white)](LICENSE)
 
 **English** | [简体中文](docs/README.zh-CN.md)
 
@@ -22,12 +22,12 @@ are handled by the same tooling you would use in a terminal — only the command
 tables, buttons and forms. It is a lightweight alternative to Docker Desktop for WSL workloads, and
 it runs on Windows 10 and Windows 11 with WSL 2.
 
-Built with Wails v3, Go 1.25, Vue 3 and TypeScript.
+Built with Wails v3, Go 1.26, Vue 3 and TypeScript.
 
 ## Quick start
 
 Two commands are all you need. Install the prerequisites first: Windows 10/11 with WSL 2, the
-`wslc` CLI on `PATH`, [Go](https://go.dev/dl/) 1.25+, [Node.js](https://nodejs.org/) 20+, and the
+`wslc` CLI on `PATH`, [Go](https://go.dev/dl/) 1.26+, [Node.js](https://nodejs.org/) 20+, and the
 [Wails v3 CLI](https://v3.wails.io/getting-started/installation/).
 
 ```bash
@@ -109,7 +109,7 @@ docs/                  Additional documentation
 No. The app drives the `wslc` CLI that ships with WSL 2; Docker Desktop is not needed.
 
 **What are the minimum requirements?**
-Windows 10 build 1809 or newer (Windows 11 recommended), WSL 2, the `wslc` CLI on `PATH`, Go 1.25+,
+Windows 10 build 1809 or newer (Windows 11 recommended), WSL 2, the `wslc` CLI on `PATH`, Go 1.26+,
 Node.js 20+ and the Wails v3 CLI for development.
 
 **Does it support Windows on ARM?**
@@ -144,9 +144,8 @@ Yes. Use the language button in the header to switch between English and Chinese
 
 ## License
 
-No open-source license has been declared yet. Until one is added, all rights are reserved by the
-author. If you plan to redistribute the code or build on top of it, please
-[open an issue](https://github.com/JFeng2048/Wslc-Desktop/issues/new) first.
+Released under the [MIT License](LICENSE). Contributions are welcome; see
+[Contributing](#contributing) above for the workflow.
 
 ## Author
 

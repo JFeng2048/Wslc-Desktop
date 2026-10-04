@@ -1,9 +1,12 @@
 name: Release
 
+# 当前仅保留手动触发；如需恢复打标签自动发布，取消下面三行注释即可。
+# Currently manual-trigger only. Uncomment the lines below to restore automatic
+# releases on version tags.
 on:
-  push:
-    tags:
-      - 'v*'
+  # push:
+  #   tags:
+  #     - 'v*'
   workflow_dispatch:
     inputs:
       tag:
