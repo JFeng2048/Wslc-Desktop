@@ -46,6 +46,12 @@ Additional details:
 - **Search and filter** – keyword search plus state filtering on every list view.
 - **Responsive tables** – horizontally scrollable data tables with pinned action columns.
 
+## Screenshots
+
+| Volumes | Images | Networks |
+| --- | --- | --- |
+| ![Volumes view](docs/images/docs-volumes.png) | ![Images view](docs/images/docs-image.png) | ![Networks view](docs/images/docs-network.png) |
+
 ## Tech Stack
 
 | Layer | Technology |
